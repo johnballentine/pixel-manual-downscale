@@ -11,21 +11,37 @@
       margin: 0;
       padding: 0;
       overflow: hidden; /* Disable scrolling */
+      position: relative; /* Make it possible to position the resolution display */
     }
     #container {
       display: flex;
-      padding: 0;
-      margin: 0;
     }
     canvas {
-      border: 0; /* Remove canvas borders */
-      margin: 0; /* Remove canvas margin */
-      padding: 0;
+      border: 1px solid #ccc;
+      margin: 10px;
       width: 1024px;
       height: 1024px;
     }
     #controls {
-      margin-top: 10px; /* Keep the control margin, but adjust if needed */
+      margin-top: 10px;
+    }
+    #resolutionControl {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 18px;
+      color: black;
+      background: rgba(255, 255, 255, 0.8); /* Slight background to make it visible */
+      padding: 5px;
+      border-radius: 5px;
+    }
+    #resolutionControl input {
+      width: 60px;
+      margin: 5px;
+    }
+    #resolutionControl button {
+      padding: 5px 10px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -36,6 +52,11 @@
   </div>
   <div id="controls">
     <p>Scale Factor: <span id="scaleFactorDisplay">1.0</span></p>
+  </div>
+  <div id="resolutionControl">
+    <label>Width: <input type="number" id="widthInput" min="1"></label>
+    <label>Height: <input type="number" id="heightInput" min="1"></label>
+    <button id="applyResolutionButton">Apply</button>
   </div>
   <script src="script.js"></script>
 </body>
