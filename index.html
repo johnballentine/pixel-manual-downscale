@@ -10,38 +10,34 @@
       align-items: center;
       margin: 0;
       padding: 0;
-      overflow: hidden; /* Disable scrolling */
-      position: relative; /* Make it possible to position the resolution display */
     }
     #container {
       display: flex;
+      margin: 20px;
     }
     canvas {
       border: 1px solid #ccc;
-      margin: 10px;
       width: 1024px;
       height: 1024px;
     }
     #controls {
-      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      margin-top: 20px;
     }
-    #resolutionControl {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 18px;
-      color: black;
-      background: rgba(255, 255, 255, 0.8); /* Slight background to make it visible */
-      padding: 5px;
-      border-radius: 5px;
+    #resolutionControl, #offsetControl, #controlMode {
+      margin: 10px 0;
     }
-    #resolutionControl input {
-      width: 60px;
+    #resolutionControl label, #offsetControl label, #controlMode label {
       margin: 5px;
+      font-size: 16px;
     }
-    #resolutionControl button {
+    input[type="number"] {
+      width: 80px;
+    }
+    button {
       padding: 5px 10px;
-      font-size: 14px;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -51,12 +47,19 @@
     <canvas id="scaledCanvas" width="1024" height="1024"></canvas>
   </div>
   <div id="controls">
-    <p>Scale Factor: <span id="scaleFactorDisplay">1.0</span></p>
-  </div>
-  <div id="resolutionControl">
-    <label>Width: <input type="number" id="widthInput" min="1"></label>
-    <label>Height: <input type="number" id="heightInput" min="1"></label>
-    <button id="applyResolutionButton">Apply</button>
+    <div id="resolutionControl">
+      <label>Width: <input type="number" id="widthInput" min="1"></label>
+      <label>Height: <input type="number" id="heightInput" min="1"></label>
+      <button id="applyResolutionButton">Apply</button>
+    </div>
+    <div id="offsetControl">
+      <label>Offset X: <input type="number" id="offsetXInput" value="0"></label>
+      <label>Offset Y: <input type="number" id="offsetYInput" value="0"></label>
+    </div>
+    <div id="controlMode">
+      <label><input type="radio" name="control" value="resolution" checked> Control Resolution</label>
+      <label><input type="radio" name="control" value="offset"> Control Offset</label>
+    </div>
   </div>
   <script src="script.js"></script>
 </body>
