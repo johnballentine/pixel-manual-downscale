@@ -6,6 +6,8 @@ const offsetXInput = document.getElementById('offsetXInput');
 const offsetYInput = document.getElementById('offsetYInput');
 const applyButton = document.getElementById('applyResolutionButton');
 const controlRadios = document.getElementsByName('control');
+const displayRadios = document.getElementsByName('display');
+const transparencySlider = document.getElementById('transparencySlider');
 
 const originalCtx = originalCanvas.getContext('2d');
 const scaledCtx = scaledCanvas.getContext('2d');
@@ -14,6 +16,8 @@ let img = new Image();
 let currentWidth, currentHeight;
 let offsetX = 0, offsetY = 0;
 let controlMode = 'resolution'; // Default mode
+let displayMode = 'side-by-side'; // Default display mode
+let transparency = 0.5; // Default transparency for overlaid mode
 
 document.addEventListener('keydown', handleKeyDown);
 
@@ -24,6 +28,12 @@ window.addEventListener('keydown', function(e) {
   }
 });
 
+// Listen for display mode changes
+displayRadios.forEach(radio => {
+  radio.addEventListener('change', handleDisplayModeChange);
+});
+transparencySlider.addEventListener('input', handleSliderChange);
+
 // Load the image when the page loads
 window.onload = function() {
   img.onload = function() {
@@ -33,16 +43,17 @@ window.onload = function() {
     drawScaledImage();
     updateResolutionFields();
   };
-  img.src = 'image.webp'; // Ensure the image file is in the same directory
+  img.src = 'image.webp'; // Ensure the image file is image.webp
 };
 
 // Draw the original image at full resolution
 function drawOriginalImage() {
   originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+  originalCtx.imageSmoothingEnabled = false; // Nearest-neighbor interpolation
   originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height);
 }
 
-// Properly apply offset, downscale the entire image, and then enlarge it to fit the canvas
+// Draw the scaled image and handle display modes
 function drawScaledImage() {
   // 1. Create an off-screen canvas that represents the original image
   const offCanvas = document.createElement('canvas');
@@ -65,16 +76,60 @@ function drawScaledImage() {
   // 4. Downscale the offset image to the currentWidth and currentHeight
   downscaleCtx.drawImage(offCanvas, 0, 0, img.width, img.height, 0, 0, currentWidth, currentHeight);
 
-  // 5. Now enlarge the downscaled image to fit the display canvas (1024x1024)
-  scaledCtx.clearRect(0, 0, scaledCanvas.width, scaledCanvas.height);
-  scaledCtx.imageSmoothingEnabled = false; // Nearest-neighbor interpolation
-  scaledCtx.drawImage(
-    downscaleCanvas,               // Source: the downscaled image
-    0, 0,                          // Position in the source
-    currentWidth, currentHeight,    // Source width and height
-    0, 0,                          // Draw it at (0, 0) on the final canvas
-    scaledCanvas.width, scaledCanvas.height // Scale to fill the entire canvas
-  );
+  // Handle display mode
+  if (displayMode === 'side-by-side') {
+    // Side-by-side mode (current behavior)
+    originalCanvas.style.display = 'block';
+    scaledCanvas.style.display = 'block';
+    transparencySlider.style.display = 'none'; // Hide the slider
+
+    // Redraw the original image on the originalCanvas
+    originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+    originalCtx.imageSmoothingEnabled = false;
+    originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height); // Ensure original image is restored
+    
+    scaledCtx.clearRect(0, 0, scaledCanvas.width, scaledCanvas.height);
+    scaledCtx.imageSmoothingEnabled = false; // Nearest-neighbor interpolation
+    scaledCtx.drawImage(
+      downscaleCanvas,               // Source: the downscaled image
+      0, 0,                          // Position in the source
+      currentWidth, currentHeight,    // Source width and height
+      0, 0,                          // Draw it at (0, 0) on the final canvas
+      scaledCanvas.width, scaledCanvas.height // Scale to fill the entire canvas
+    );
+  } else if (displayMode === 'overlaid') {
+    // Overlaid mode: draw the scaled image on top of the original with transparency
+    originalCanvas.style.display = 'block';
+    scaledCanvas.style.display = 'none';
+    transparencySlider.style.display = 'block'; // Show the slider
+    
+    originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+    originalCtx.imageSmoothingEnabled = false; // Nearest-neighbor for original
+    originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height); // Original image
+    
+    originalCtx.globalAlpha = transparency; // Set transparency from the slider
+    originalCtx.imageSmoothingEnabled = false; // Nearest-neighbor for overlay
+    originalCtx.drawImage(downscaleCanvas, 0, 0, currentWidth, currentHeight, 0, 0, originalCanvas.width, originalCanvas.height); // Scaled image on top
+    
+    originalCtx.globalAlpha = 1.0; // Reset transparency
+  }
+}
+
+// Handle display mode change
+function handleDisplayModeChange(e) {
+  displayMode = e.target.value;
+  if (displayMode === 'overlaid') {
+    transparencySlider.style.display = 'block'; // Show the slider in overlaid mode
+  } else {
+    transparencySlider.style.display = 'none'; // Hide the slider in other modes
+  }
+  drawScaledImage(); // Redraw the images based on the new mode
+}
+
+// Handle slider change
+function handleSliderChange(e) {
+  transparency = parseFloat(e.target.value); // Update transparency from the slider
+  drawScaledImage();
 }
 
 // Update the input fields with the current resolution and offset
