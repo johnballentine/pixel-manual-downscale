@@ -128,50 +128,58 @@ function drawScaledImage() {
 }
 
 function saveImage() {
-    // Generate a timestamp in the format YYYYMMDD_HHMMSS
-    const now = new Date();
-    const formattedDate = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-  
-    // Create an off-screen canvas with the correct downscaled resolution
-    const offScreenSaveCanvas = document.createElement('canvas');
-    offScreenSaveCanvas.width = currentWidth; // Use the actual scaled width
-    offScreenSaveCanvas.height = currentHeight; // Use the actual scaled height
-    const offScreenCtx = offScreenSaveCanvas.getContext('2d');
-    offScreenCtx.imageSmoothingEnabled = false; // Ensure nearest-neighbor scaling
-    
-    // Draw the image from the downscaled canvas (scaledCanvas)
-    offScreenCtx.drawImage(
-      scaledCanvas,                  // Source canvas
-      0, 0,                          // Source coordinates
-      scaledCanvas.width, scaledCanvas.height, // Source dimensions (display size)
-      0, 0,                          // Destination coordinates
-      currentWidth, currentHeight     // Destination dimensions (actual resolution)
-    );
-    
-    // Create a download link for the newly created off-screen canvas (image)
-    const imageLink = document.createElement('a');
-    imageLink.download = `${formattedDate}_downscaled_image.png`; // Date first, then text
-    imageLink.href = offScreenSaveCanvas.toDataURL('image/png'); // Save the off-screen canvas as PNG
-    imageLink.click();
-  
-    // Save metadata with the same timestamp
-    const metadata = {
-      originalFilename: imageLoader.files[0].name, // Get original file name from the uploaded file
-      originalResolution: `${img.width}x${img.height}`,
-      offsetX: offsetX,
-      offsetY: offsetY,
-      date: now.toISOString() // ISO format for the date in metadata
-    };
-  
-    // Create a Blob for the metadata JSON
-    const metadataBlob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
-    const metadataLink = document.createElement('a');
-    metadataLink.href = URL.createObjectURL(metadataBlob);
-    metadataLink.download = `${formattedDate}_metadata.json`; // Date first, then text for metadata
-    metadataLink.click();
-  }
-  
-  
+  // Generate a timestamp in the format YYYYMMDD_HHMMSS
+  const now = new Date();
+  const formattedDate = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+
+  // Create an off-screen canvas with the correct downscaled resolution
+  const offScreenSaveCanvas = document.createElement('canvas');
+  offScreenSaveCanvas.width = currentWidth; // Use the actual scaled width
+  offScreenSaveCanvas.height = currentHeight; // Use the actual scaled height
+  const offScreenCtx = offScreenSaveCanvas.getContext('2d');
+  offScreenCtx.imageSmoothingEnabled = false; // Ensure nearest-neighbor scaling
+
+  // Apply the offset, draw the image onto the off-screen canvas at the original resolution
+  const fullSizeCanvas = document.createElement('canvas');
+  fullSizeCanvas.width = img.width;
+  fullSizeCanvas.height = img.height;
+  const fullSizeCtx = fullSizeCanvas.getContext('2d');
+  fullSizeCtx.imageSmoothingEnabled = false;
+
+  // Apply the offset and draw the full-sized image onto the full-size canvas
+  fullSizeCtx.drawImage(img, offsetX, offsetY, img.width, img.height);
+
+  // Now downscale the full-size canvas with the offset applied
+  offScreenCtx.drawImage(
+    fullSizeCanvas,                // Source: full-size canvas with offset applied
+    0, 0,                          // Source coordinates
+    img.width, img.height,         // Source dimensions
+    0, 0,                          // Destination coordinates
+    currentWidth, currentHeight    // Destination size (downscaled)
+  );
+
+  // Create a download link for the newly created off-screen canvas (image)
+  const imageLink = document.createElement('a');
+  imageLink.download = `${formattedDate}_downscaled_image.png`; // Date first, then text
+  imageLink.href = offScreenSaveCanvas.toDataURL('image/png'); // Save the off-screen canvas as PNG
+  imageLink.click();
+
+  // Save metadata with the same timestamp
+  const metadata = {
+    originalFilename: imageLoader.files[0].name, // Get original file name from the uploaded file
+    originalResolution: `${img.width}x${img.height}`,
+    offsetX: offsetX,
+    offsetY: offsetY,
+    date: now.toISOString() // ISO format for the date in metadata
+  };
+
+  // Create a Blob for the metadata JSON
+  const metadataBlob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
+  const metadataLink = document.createElement('a');
+  metadataLink.href = URL.createObjectURL(metadataBlob);
+  metadataLink.download = `${formattedDate}_metadata.json`; // Date first, then text for metadata
+  metadataLink.click();
+}
 
 // Handle display mode change
 function handleDisplayModeChange(e) {
